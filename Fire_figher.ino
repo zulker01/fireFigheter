@@ -1,5 +1,11 @@
 #include <Arduino.h>
 
+// pins for bluetooth 0 1
+// pins for flame detector : 2 3 4 
+
+int leftFlamePin = 2;
+int midFlamePin = 3;
+int rightFlamePin = 4;
 
 int redLight = 13;// 13 no. pin for redlight
 int greenLight = 11;// 11 no.pin for greenlight
@@ -16,10 +22,12 @@ int flame;
 //setup flame sensor
 void setup_flame_sensor()
 {
-   flamePin= 2;
-   flame_LED = 12;//
-   pinMode(flamePin,INPUT);
-   pinMode(flame_LED,OUTPUT);
+   //flamePin= 2;
+   //flame_LED = 12;//
+   pinMode(leftFlamePin,INPUT);
+   pinMode(midFlamePin,INPUT);
+   pinMode(rightFlamePin,INPUT);
+   //pinMode(flame_LED,OUTPUT);
    flame = HIGH;
 }
 
@@ -73,20 +81,22 @@ void smoke_detection_and_buzzer(){
   }
 }
 
-void detect_flame()
+int detect_flame(int flamePin)
 {
   flame = digitalRead(flamePin);
   Serial.println("flame : ");
   Serial.println(flame);
   if (flame== LOW)
   {
-    Serial.println(" *******  fire ******");
-    digitalWrite(flame_LED,HIGH);
+    Serial.print(flamePin);
+    Serial.println(" :   *******  fire ******");
+    //digitalWrite(flame_LED,HIGH);
   }
   
   else{
-    Serial.println("No fire");
-    digitalWrite(flame_LED,LOW);
+    Serial.print(flamePin);
+    Serial.println("   :  No fire");
+    //digitalWrite(flame_LED,LOW);
   }
 }
 
@@ -103,8 +113,13 @@ void start_water_pump()
 void loop() {
   
  
-  smoke_detection_and_buzzer();//for smoke detection
-  detect_flame();
-  delay(1000);
+  //smoke_detection_and_buzzer();//for smoke detection
+  detect_flame(leftFlamePin);
+  delay(500);  // delay so that next flame detection function is not called within previous & 
+             // the values won;t overlap
+  detect_flame(midFlamePin);
+  delay(500);
+  detect_flame(rightFlamePin);
+  delay(500);
   
 }
