@@ -1,4 +1,4 @@
-int motorpin = A5;
++nt motorpin = A5;
 
 
 // variable for water pump & relay
@@ -6,8 +6,56 @@ const int RELAY_PIN = A5;  // the Arduino pin, which connects to the IN pin of r
 
 // 
 void setup_relay_pin()
-{
-  // initialize digital pin A5 as an output.
+{+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+nitialize digital pin A5 as an output.
   pinMode(RELAY_PIN, OUTPUT);
 }
 
