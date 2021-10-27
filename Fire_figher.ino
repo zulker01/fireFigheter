@@ -79,6 +79,7 @@ void setup ()
   //pinMode (smokeB, INPUT);
   Myservo.attach (servoPin);
   Myservo.write (servoMidPos);
+  servoCurrentPos = servoMidPos;
   delay (1000);
 
   setup_flame_sensor ();
@@ -90,9 +91,18 @@ void setup ()
 // this function rotates the servo motor
 void rotateServo(int prevPos, int nextPos)
 {
+  if(prevPos<nextPos){
   for(int pos=prevPos;pos<=nextPos;pos++){
       Myservo.write(pos);
       delay(15);
+  }
+  }
+  else
+  {
+    for(int pos=prevPos;pos>=nextPos;pos--){
+      Myservo.write(pos);
+      delay(15);
+  }
   }
 }
 /*This function detects smoke and rings buzzer. greenlight on means no smoke detected. 
@@ -213,7 +223,9 @@ void detect_fire ()
   if (flameDetect1)
     {
       // make servo to rotate to flame 1
-      Myservo.write (servoLeftPos);
+      rotateServo(servoCurrentPos,servoLeftPos);
+      servoCurrentPos = servoLeftPos;
+      //Myservo.write (servoLeftPos);
       //Serial.println (" servo in left position ");
       flameStartTime = millis ();
       start_water_pump ();
@@ -244,7 +256,9 @@ void detect_fire ()
   if (flameDetect2)
     {
       // make servo to rotate to flame 2
-      Myservo.write (servoMidPos);
+      rotateServo(servoCurrentPos,servoMidPos);
+      servoCurrentPos = servoMidPos;
+      //Myservo.write (servoMidPos);
       //Serial.println (" servo in mid position ");
       flameStartTime = millis ();
       start_water_pump ();
@@ -273,7 +287,9 @@ void detect_fire ()
   if (flameDetect3)
     {
       // make servo to rotate to flame 3
-      Myservo.write (servoRightPos);
+      rotateServo(servoCurrentPos,servoRightPos);
+      servoCurrentPos = servoRightPos;
+      //Myservo.write (servoRightPos);
       //Serial.println (" servo in right position ");
       flameStartTime = millis ();
       start_water_pump ();
