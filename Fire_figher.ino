@@ -1,24 +1,26 @@
 #include <Arduino.h>
 #include<Servo.h>
-Servo Myservo;
+Servo Myservo; // servo motor variable
 // pins for bluetooth 0 1
 // pins for flame detector : 2 3 4 
 // pins for smoke detector : A0 A1
 // pins for water pump : A5
 // pin for buzzer = 10
 // pin for servo motor  = 11
-// servo position  : 50 : left , 130 : mid , 180 : right 
-int servoLeftPos = 50;
+// servo position  : 50 degree  : left , 130degree : mid , 180 degree: right 
+int servoLeftPos = 50;  
 int servoMidPos = 130;
 int servoRightPos = 180;
+int servoCurrentPos ;
 
-int leftFlamePin = 2;
+// flame sensor pins
+int leftFlamePin = 4;
 int midFlamePin = 3;
-int rightFlamePin = 4;
+int rightFlamePin = 2;
 
-int servoPin = 11;
-int smokeA = A0;		//A0 analog pin for smoke sensor
-int smokeB = A1;
+int servoPin = 11; // servo motor pin
+int smokeA = A3;		//A0 analog pin for smoke sensor
+
 int buzzer = 10;		// 10 no. pin for buzzer
 int thresSensor = 700;		// adjust this relatively
 //output and input pin setup. usable pins remaining are 2,3,4,5,6,7,8,9,12(9 pins)
@@ -29,6 +31,7 @@ int flame_LED;
 int flame;
 
 int flameDetected = 0;		// flag if flame is detected;
+// time calculation , smokeStartTime : starting time of detecting smoke, flameStartTIme : starting time of detecting flame
 unsigned long int smokeStartTime = 0, currentTime, flameStartTime = 0;
 int smokeFire = 0;		// check if fire detected through smoke
 // zero for no smoke still
@@ -58,8 +61,7 @@ void setup_flame_sensor ()
 const int RELAY_PIN = A5;	// the Arduino pin, which connects to the IN pin of relay
 
 // 
-void
-setup_relay_pin ()
+void setup_relay_pin ()
 {
   // initialize digital pin A5 as an output.
   pinMode (RELAY_PIN, OUTPUT);
@@ -74,7 +76,7 @@ void setup ()
   pinMode (buzzer, OUTPUT);
   //input from smoke sensor, output in buzzer, led and bluetooth
   pinMode (smokeA, INPUT);
-  pinMode (smokeB, INPUT);
+  //pinMode (smokeB, INPUT);
   Myservo.attach (servoPin);
   Myservo.write (servoMidPos);
   delay (1000);
@@ -85,7 +87,14 @@ void setup ()
 
 
 }
-
+// this function rotates the servo motor
+void rotateServo(int prevPos, int nextPos)
+{
+  for(int pos=prevPos;pos<=nextPos;pos++){
+      Myservo.write(pos);
+      delay(15);
+  }
+}
 /*This function detects smoke and rings buzzer. greenlight on means no smoke detected. 
 if smoke is detected, then buzzer will ring and red light will be on.
 */
@@ -94,21 +103,21 @@ int smoke_detection_and_buzzer ()
 {
   int analogSensr = analogRead (smokeA);	// reading analog reading of smoke sensor
 
-  Serial.print ("Smoke sense : Pin A0: ");
+  //serial.print ("Smoke sense : Pin A0: ");
 
-  Serial.print (analogSensr);
+  //serial.print (analogSensr);
 
   if (analogSensr > thresSensor)
     {				// if smoke reading is > 700 then buzzer will ring
       //digitalWrite(redLight,HIGH);
       //digitalWrite(greenLight,LOW);
       //tone (buzzer, 500);
-      Serial.println (" smoke detected YES");	//prints reading and "YES" on the phone via bluetooth
+      //Serial.println (" smoke detected YES");	//prints reading and "YES" on the phone via bluetooth
       return 1;
     }
   else
     {
-      Serial.print ("No Smoke");	// if smoke reading is <= 700 then greenlight will be on
+      //Serial.print ("No Smoke");	// if smoke reading is <= 700 then greenlight will be on
       //noTone (buzzer);
       return 0;
     }
@@ -117,13 +126,13 @@ int smoke_detection_and_buzzer ()
 int detect_flame (int flamePin)
 {
   flame = digitalRead (flamePin);
-  Serial.println ("flame : ");
-  Serial.println (flame);
+  //serial.println ("flame : ");
+  //serial.println (flame);
   if (flame == LOW)
     {
       flameDetected = 1;
-      Serial.print (flamePin);
-      Serial.println (" :   *******  fire ******");
+      //serial.print (flamePin);
+      //Serial.println (" :   *******  fire ******");
       return 1;			// fire detected 
       //digitalWrite(flame_LED,HIGH);
     }
@@ -131,8 +140,8 @@ int detect_flame (int flamePin)
   else
     {
       flameDetected = 0;
-      Serial.print (flamePin);
-      Serial.println ("   :  No fire");
+      //serial.print (flamePin);
+      //Serial.println ("   :  No fire");
       return 0;			// no fire 
       //digitalWrite(flame_LED,LOW);
     }
@@ -143,6 +152,7 @@ int detect_flame (int flamePin)
 
 void start_water_pump ()
 {
+  // delay to save pump from sudden on off
   delay (200);
 
   digitalWrite (RELAY_PIN, HIGH);	// turn on pump 5 seconds
@@ -171,7 +181,7 @@ void detect_fire ()
 	{
 	  smokeStartTime = millis ();
 	  smokeFire = 1;
-	  Serial.println ("smoke detected for first time ");
+	  //Serial.println ("smoke detected for first time ");
 	}
       // if smoke is detected before check if smoke was for 4 seconds  
       else if (smokeFire == 1)
@@ -180,7 +190,7 @@ void detect_fire ()
 	  if ((currentTime - smokeStartTime) >= minTimeToSetSmokeAlarm)
 	    {
 	      tone (buzzer, 500);
-	      Serial.println ("buzzer started 4 ");
+	      Serial.println ("buzzer started : ******** ALARM , SMOKE DETECTED ******** ");
 	      smokeFire = 2;
 	      Serial.println ("smoke for long time, buzzer & pump started ");
 	      start_water_pump ();
@@ -204,10 +214,10 @@ void detect_fire ()
     {
       // make servo to rotate to flame 1
       Myservo.write (servoLeftPos);
-      Serial.println (" servo in left position ");
+      //Serial.println (" servo in left position ");
       flameStartTime = millis ();
       start_water_pump ();
-      Serial.println (" Water pump started for flame 1 left ");
+      //Serial.println (" Water pump started for flame 1 left ");
       while (flameDetect1)
 	{
 	  flameDetect1 = detect_flame (leftFlamePin);
@@ -215,17 +225,17 @@ void detect_fire ()
 	  currentTime = millis ();
 	  if ((flameStartTime - currentTime) > minTimeToSetFlameAlarm)
 	    {
-	      Serial.println ("flame for long time, buzzer started ");
+	      Serial.println ("left flame  detected for long time, buzzer started\n\n********** ALARM , FIRE FLAME DETECTED ******* ");
 
 	      tone (buzzer, 500);
-	      Serial.println ("buzzer started 1 ");
+	      //Serial.println ("buzzer started 1 ");
 	    }
 	}
       noTone (buzzer);
-      Serial.println ("buzzer off ");
+      //Serial.println ("buzzer off ");
       flameStartTime = 0;
       shut_water_pump ();
-      Serial.println (" Water pump off ");
+      //Serial.println (" Water pump off ");
     }
 
   //delay(500);  // delay so that next flame detection function is not called within previous & 
@@ -235,10 +245,10 @@ void detect_fire ()
     {
       // make servo to rotate to flame 2
       Myservo.write (servoMidPos);
-      Serial.println (" servo in mid position ");
+      //Serial.println (" servo in mid position ");
       flameStartTime = millis ();
       start_water_pump ();
-      Serial.println (" Water pump started for flame 2 mid ");
+     // Serial.println (" Water pump started for flame 2 mid ");
       while (flameDetect2)
 	{
 	  flameDetect2 = detect_flame (midFlamePin);
@@ -246,17 +256,16 @@ void detect_fire ()
 	  currentTime = millis ();
 	  if ((flameStartTime - currentTime) > minTimeToSetFlameAlarm)
 	    {
-	      Serial.println ("flame for long time, buzzer started ");
-
+	      Serial.println ("mid flame  detected for long time, buzzer started\n\n********** ALARM , FIRE FLAME DETECTED ******* ");
 	      tone (buzzer, 500);
-	      Serial.println ("buzzer started 2 ");
+	      //Serial.println ("buzzer started 2 ");
 	    }
 	}
       noTone (buzzer);
-      Serial.println ("buzzer stopped ");
+      //Serial.println ("buzzer stopped ");
       flameStartTime = 0;
       shut_water_pump ();
-      Serial.println (" Water pump off ");
+     // Serial.println (" Water pump off ");
     }
   //delay(500);
   flameDetect3 = detect_flame (rightFlamePin);
@@ -265,10 +274,10 @@ void detect_fire ()
     {
       // make servo to rotate to flame 3
       Myservo.write (servoRightPos);
-      Serial.println (" servo in right position ");
+      //Serial.println (" servo in right position ");
       flameStartTime = millis ();
       start_water_pump ();
-      Serial.println (" Water pump started for flame 3 right ");
+      //Serial.println (" Water pump started for flame 3 right ");
       while (flameDetect3)
 	{
 	  flameDetect3 = detect_flame (rightFlamePin);
@@ -276,17 +285,16 @@ void detect_fire ()
 	  currentTime = millis ();
 	  if ((flameStartTime - currentTime) > minTimeToSetFlameAlarm)
 	    {
-	      Serial.println ("flame for long time, buzzer started ");
-
+	      Serial.println ("right flame  detected for long time, buzzer started\n\n********** ALARM , FIRE FLAME DETECTED ******* ");
 	      tone (buzzer, 500);
-	      Serial.println ("buzzer started 3 ");
+	      //Serial.println ("buzzer started 3 ");
 	    }
 	}
       noTone (buzzer);
-      Serial.println ("buzzer stopped ");
+      //Serial.println ("buzzer stopped ");
       flameStartTime = 0;
       shut_water_pump ();
-      Serial.println (" Water pump off ");
+    //  Serial.println (" Water pump off ");
     }
   //delay(500);
   /*
